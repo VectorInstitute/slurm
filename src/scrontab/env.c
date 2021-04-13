@@ -19,98 +19,10 @@
  * OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$Id: env.c,v 1.10 2004/01/23 18:56:42 vixie Exp $";
-#endif
-
-#include "cron.h"
-
-char **
-env_init(void) {
-	char **p = (char **) malloc(sizeof(char **));
-
-	if (p != NULL)
-		p[0] = NULL;
-	return (p);
-}
-
-void
-env_free(char **envp) {
-	char **p;
-
-	for (p = envp; *p != NULL; p++)
-		free(*p);
-	free(envp);
-}
-
-char **
-env_copy(char **envp) {
-	int count, i, save_errno;
-	char **p;
-
-	for (count = 0; envp[count] != NULL; count++)
-		NULL;
-	p = (char **) malloc((count+1) * sizeof(char *));  /* 1 for the NULL */
-	if (p != NULL) {
-		for (i = 0; i < count; i++)
-			if ((p[i] = strdup(envp[i])) == NULL) {
-				save_errno = errno;
-				while (--i >= 0)
-					free(p[i]);
-				free(p);
-				errno = save_errno;
-				return (NULL);
-			}
-		p[count] = NULL;
-	}
-	return (p);
-}
-
-char **
-env_set(char **envp, char *envstr) {
-	int count, found;
-	char **p, *envtmp;
-
-	/*
-	 * count the number of elements, including the null pointer;
-	 * also set 'found' to -1 or index of entry if already in here.
-	 */
-	found = -1;
-	for (count = 0; envp[count] != NULL; count++) {
-		if (!strcmp_until(envp[count], envstr, '='))
-			found = count;
-	}
-	count++;	/* for the NULL */
-
-	if (found != -1) {
-		/*
-		 * it exists already, so just free the existing setting,
-		 * save our new one there, and return the existing array.
-		 */
-		if ((envtmp = strdup(envstr)) == NULL)
-			return (NULL);
-		free(envp[found]);
-		envp[found] = envtmp;
-		return (envp);
-	}
-
-	/*
-	 * it doesn't exist yet, so resize the array, move null pointer over
-	 * one, save our string over the old null pointer, and return resized
-	 * array.
-	 */
-	if ((envtmp = strdup(envstr)) == NULL)
-		return (NULL);
-	p = (char **) realloc((void *) envp,
-			      (size_t) ((count+1) * sizeof(char **)));
-	if (p == NULL) {
-		free(envtmp);
-		return (NULL);
-	}
-	p[count] = p[count-1];
-	p[count-1] = envtmp;
-	return (p);
-}
+#include <ctype.h>
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* The following states are used by load_env(), traversed in order: */
 enum env_state {
@@ -124,25 +36,13 @@ enum env_state {
 	ERROR,		/* Error */
 };
 
-/* return	ERR = end of file
- *		FALSE = not an env setting (file was repositioned)
- *		TRUE = was an env setting
+/* return	false = not an env setting
+ *		true = was an env setting
  */
-int
-load_env(char *envstr, FILE *f) {
-	long filepos;
-	int fileline;
+extern bool load_env(char *envstr) {
 	enum env_state state;
-	char name[MAX_ENVSTR], val[MAX_ENVSTR];
 	char quotechar, *c, *str;
-
-	filepos = ftell(f);
-	fileline = LineNumber;
-	skip_comments(f);
-	if (EOF == get_string(envstr, MAX_ENVSTR, f, "\n"))
-		return (ERR);
-
-	Debug(DPARS, ("load_env, read <%s>\n", envstr))
+	char name[131072], val[131072];
 
 	bzero(name, sizeof name);
 	bzero(val, sizeof val);
@@ -211,10 +111,7 @@ load_env(char *envstr, FILE *f) {
 		}
 	}
 	if (state != FINI && !(state == VALUE && !quotechar)) {
-		Debug(DPARS, ("load_env, not an env var, state = %d\n", state))
-		fseek(f, filepos, 0);
-		Set_LineNum(fileline);
-		return (FALSE);
+		return false;
 	}
 	if (state == VALUE) {
 		/* End of unquoted value: trim trailing whitespace */
@@ -225,26 +122,5 @@ load_env(char *envstr, FILE *f) {
 
 	/* 2 fields from parser; looks like an env setting */
 
-	/*
-	 * This can't overflow because get_string() limited the size of the
-	 * name and val fields.  Still, it doesn't hurt to be careful...
-	 */
-	if (!glue_strings(envstr, MAX_ENVSTR, name, val, '='))
-		return (FALSE);
-	Debug(DPARS, ("load_env, <%s> <%s> -> <%s>\n", name, val, envstr))
-	return (TRUE);
-}
-
-char *
-env_get(char *name, char **envp) {
-	int len = strlen(name);
-	char *p, *q;
-
-	while ((p = *envp++) != NULL) {
-		if (!(q = strchr(p, '=')))
-			continue;
-		if ((q - p) == len && !strncmp(p, name, len))
-			return (q+1);
-	}
-	return (NULL);
+	return true;
 }

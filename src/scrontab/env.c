@@ -24,6 +24,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "src/common/xstring.h"
+
 /* The following states are used by load_env(), traversed in order: */
 enum env_state {
 	NAMEI,		/* First char of NAME, may be quote */
@@ -36,10 +38,17 @@ enum env_state {
 	ERROR,		/* Error */
 };
 
-/* return	false = not an env setting
+/*
+ * IN		envstr - string to check for valid env setting.
+ * IN/OUT	key - string to save the env name if valid, NULL otherwise.
+ *		Needs to be xfree'd by the caller.
+ * IN/OUT	value - string to save the env value if valid, NULL otherwise.
+ *		Needs to be xfree'd by the caller.
+ *
+ * RET		false = not an env setting
  *		true = was an env setting
  */
-extern bool load_env(char *envstr) {
+extern bool load_env(char *envstr, char **key, char **value) {
 	enum env_state state;
 	char quotechar, *c, *str;
 	char name[131072], val[131072];
@@ -121,6 +130,8 @@ extern bool load_env(char *envstr) {
 	}
 
 	/* 2 fields from parser; looks like an env setting */
+	*key = xstrdup(name);
+	*value = xstrdup(val);
 
 	return true;
 }

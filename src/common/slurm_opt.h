@@ -159,6 +159,7 @@ enum {
 	LONG_OPT_REQUEUE,
 	LONG_OPT_RESERVATION,
 	LONG_OPT_RESV_PORTS,
+	LONG_OPT_SEND_LIBS,
 	LONG_OPT_SIGNAL,
 	LONG_OPT_SLURMD_DEBUG,
 	LONG_OPT_SOCKETSPERNODE,
@@ -268,6 +269,7 @@ typedef struct {
 	bool quit_on_intr;		/* --quit-on-interrupt		*/
 	int relative;			/* --relative			*/
 	int resv_port_cnt;		/* --resv_ports			*/
+	bool send_libs;			/* --send-libs			*/
 	int slurmd_debug;		/* --slurmd-debug		*/
 	char *task_epilog;		/* --task-epilog		*/
 	char *task_prolog;		/* --task-prolog		*/

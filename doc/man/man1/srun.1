@@ -2170,6 +2170,14 @@ This option can not be used with the \fB\-\-thread\-spec\fR option. This option
 applies to job allocations.
 
 .TP
+\fB\-\-send\-libs\fR[=\fIyes|no\fR]
+If set to \fIyes\fR (or no argument), autodetect and broadcast the executable's
+shared object dependencies to allocated compute nodes. The files are placed in
+the same directory as the executable. This overrides the default behavior
+configured in slurm.conf \fBSbcastParameters send_libs\fR. This option only
+works in conjunction with \fB\-\-bcast\fR.
+
+.TP
 \fB\-\-signal\fR=[R:]<\fIsig_num\fR>[@<\fIsig_time\fR>]
 When a job is within \fIsig_time\fR seconds of its end time,
 send it the signal \fIsig_num\fR.
@@ -2881,6 +2889,9 @@ Same as \fB\-\-reservation\fR
 .TP
 \fBSLURM_RESV_PORTS\fR
 Same as \fB\-\-resv\-ports\fR
+.TP
+\fBSLURM_SEND_LIBS\fR
+Same as \fB\--send\-libs\fR
 .TP
 \fBSLURM_SIGNAL\fR
 Same as \fB\-\-signal\fR

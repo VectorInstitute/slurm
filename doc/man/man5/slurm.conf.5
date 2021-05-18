@@ -2722,6 +2722,13 @@ Specify default file compression library to be used.
 Supported values are "lz4" and "none".
 The default value with the sbcast \-\-compress option is "lz4" and "none" otherwise.
 Some compression libraries may be unavailable on some systems.
+.TP
+\fBsend_libs\fR
+If set, attempt to autodetect and broadcast the executable's shared object
+dependencies to allocated compute nodes. The files are placed in the same
+directory as the executable. This can be overridden with either \fBsbcast\fR or
+\fBsrun\fR \fB\-\-send\-libs\fR option.
+By default this is disabled.
 .RE
 
 .TP

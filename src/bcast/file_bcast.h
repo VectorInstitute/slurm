@@ -70,8 +70,18 @@ typedef struct file_bcast_info {
 	uid_t uid;		/* uid of owner */
 } file_bcast_info_t;
 
+typedef struct {
+	char *bcast_cache_dir;			/* target directory path */
+	uint32_t bcast_sent_cnt;		/* succeeded bcast count */
+	int bcast_total_cnt;			/* libs in list count */
+	struct bcast_parameters *params;	/* bcast parameters */
+	int return_code;			/* bcast_file() rc */
+} foreach_shared_object_t;
+
 extern int bcast_file(struct bcast_parameters *params);
 
 extern int bcast_decompress_data(file_bcast_msg_t *req);
+
+extern int bcast_shared_objects(struct bcast_parameters *params);
 
 #endif

@@ -71,6 +71,7 @@
 
 #include "file_bcast.h"
 
+#define LINE_BUF_SIZE 256
 #define MAX_THREADS      8	/* These can be huge messages, so
 				 * only run MAX_THREADS at one time */
 
@@ -85,7 +86,10 @@ static int   _file_bcast(struct bcast_parameters *params,
 			 file_bcast_msg_t *bcast_msg,
 			 job_sbcast_cred_msg_t *sbcast_cred);
 static int   _file_state(struct bcast_parameters *params);
+static int _foreach_shared_object(void *x, void *y);
 static int   _get_job_info(struct bcast_parameters *params);
+static int _get_lib_paths(char *filename, List lib_paths);
+static char *_popen_command(char *command, int *status);
 
 
 static int _file_state(struct bcast_parameters *params)
@@ -386,6 +390,160 @@ static int _decompress_data_lz4(file_bcast_msg_t *req)
 #else
 	return -1;
 #endif
+}
+
+/*
+ * IN: char pointer with the command to popen().
+ * IN/OUT: exit status of the command to execute.
+ *
+ * RET: stdout/stderr from the command execution or NULL on error.
+ */
+static char *_popen_command(char *command, int *status)
+{
+	char line[LINE_BUF_SIZE];
+	char *output = NULL;
+	FILE *fp = NULL;
+
+	if (!(fp = popen(command, "re"))) {
+		error("popen() failed: %m\n");
+		return NULL;
+	}
+
+	while (fgets(line, LINE_BUF_SIZE, fp))
+		xstrcat(output, line);
+
+	if ((*status = pclose(fp)) == -1) {
+		error("pclose() failed: %m\n");
+		xfree(output);
+		return NULL;
+	}
+
+	return output;
+}
+
+/*
+ * IN: char pointer with the filename.
+ * IN/OUT: List of shared object direct and indirect dependencies.
+ *
+ * RET:	SLURM_[SUCCESS|ERROR]
+ */
+static int _get_lib_paths(char *filename, List lib_paths)
+{
+	char *command = NULL, *output = NULL;
+	char *lpath = NULL, *lpath_end = NULL;
+	char *tok = NULL, *save_ptr = NULL;
+	int status, rc = SLURM_SUCCESS;
+
+	if (!filename || !lib_paths) {
+		rc = SLURM_ERROR;
+		goto fini;
+	}
+
+	xstrfmtcat(command, "/usr/bin/ldd %s 2> /dev/null", filename);
+	output = _popen_command(command, &status);
+	if (status) {
+		error("command '%s' exited with status %d", command, status);
+		verbose("%s", output);
+		rc = SLURM_ERROR;
+		goto fini;
+	} else if (!output) {
+		verbose("command '%s' exited with status %d but got no output",
+			command, status);
+		rc = SLURM_SUCCESS;
+		goto fini;
+	}
+
+	tok = strtok_r(output, "\n", &save_ptr);
+	while (tok) {
+		if ((lpath = xstrstr(tok, "/"))) {
+			if ((lpath_end = xstrstr(lpath, " "))) {
+				*lpath_end = '\0';
+				list_append(lib_paths, xstrdup(lpath));
+			}
+		}
+		tok = strtok_r(NULL, "\n", &save_ptr);
+	}
+
+fini:
+	xfree(command);
+	xfree(output);
+	return rc;
+}
+
+/*
+ * ListForF to attempt to bcast a shared object.
+ *
+ * IN:	x, list data
+ * IN:	y, arguments
+ * RET:	-1 on error, 0 on success
+ */
+static int _foreach_shared_object(void *x, void *y)
+{
+	foreach_shared_object_t *args = (foreach_shared_object_t *) y;
+	xfree(args->params->src_fname);
+	args->params->src_fname = xstrdup((char *) x);
+	char *dst_basename = NULL, *src_fname_copy = NULL;
+
+	src_fname_copy = xstrdup(args->params->src_fname);
+	dst_basename = xbasename(src_fname_copy);
+	xfree(args->params->dst_fname);
+	xstrfmtcat(args->params->dst_fname, "%s/%s", args->bcast_cache_dir,
+		   dst_basename);
+
+	args->return_code = bcast_file(args->params);
+	xfree(src_fname_copy);
+
+	if (args->return_code != SLURM_SUCCESS) {
+		error("Broadcast of '%s' failed", args->params->src_fname);
+		return -1;
+	}
+
+	verbose("Broadcast shared object src:'%s' dst:'%s' succeeded (%d/%d)",
+		args->params->src_fname, args->params->dst_fname,
+		++args->bcast_sent_cnt, args->bcast_total_cnt);
+
+	return 0;
+}
+
+/*
+ * IN/OUT: bcast_parameters pointer
+ *
+ * RET: SLURM_[ERROR|SUCCESS]
+ */
+extern int bcast_shared_objects(struct bcast_parameters *params)
+{
+	foreach_shared_object_t args;
+	int rc;
+	char *dst_fname_copy = NULL;
+	List lib_paths = NULL;
+
+	xassert(params);
+
+	memset(&args, 0, sizeof(args));
+	lib_paths = list_create(xfree_ptr);
+	if ((rc = _get_lib_paths(params->src_fname, lib_paths)) !=
+	    SLURM_SUCCESS)
+		goto fini;
+
+	if (!(args.bcast_total_cnt = list_count(lib_paths))) {
+		verbose("No shared objects detected for '%s'",
+			params->src_fname);
+		goto fini;
+	}
+
+	/* xdirname() may modify the contents of path, so work off a copy. */
+	dst_fname_copy = xstrdup(params->dst_fname);
+	args.bcast_cache_dir = xdirname(dst_fname_copy);
+	args.params = params;
+	args.return_code = rc;
+
+	list_for_each(lib_paths, _foreach_shared_object, &args);
+	rc = args.return_code;
+
+fini:
+	xfree(dst_fname_copy);
+	FREE_NULL_LIST(lib_paths);
+	return rc;
 }
 
 extern int bcast_file(struct bcast_parameters *params)

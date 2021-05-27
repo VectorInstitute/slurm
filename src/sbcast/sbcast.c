@@ -83,5 +83,7 @@ int main(int argc, char **argv)
 	}
 
 	rc = bcast_file(&params);
+	if (rc == SLURM_SUCCESS && (params.flags & BCAST_FLAG_SEND_LIBS))
+		rc = bcast_shared_objects(&params);
 	return rc;
 }

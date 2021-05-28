@@ -732,7 +732,7 @@ static int _file_bcast(slurm_opt_t *opt_local, srun_job_t *job)
 	params = xmalloc(sizeof(struct bcast_parameters));
 	params->block_size = 8 * 1024 * 1024;
 	params->compress = srun_opt->compress;
-	if (srun_opt->bcast_file) {
+	if (srun_opt->bcast_file && (srun_opt->bcast_file[0] == '/')) {
 		params->dst_fname = xstrdup(srun_opt->bcast_file);
 	} else if ((tmp = xstrcasestr(slurm_conf.sbcast_parameters,
 				      "DestDir="))) {
@@ -740,7 +740,8 @@ static int _file_bcast(slurm_opt_t *opt_local, srun_job_t *job)
 		sep = xstrchr(tmp, ',');
 		if (sep)
 			sep[0] = '\0';
-		xstrfmtcat(params->dst_fname, "%s/", tmp);
+		xstrfmtcat(params->dst_fname, "%s/%s", tmp,
+			   srun_opt->bcast_file);
 		if (sep)
 			sep[0] = ',';
 	} else {

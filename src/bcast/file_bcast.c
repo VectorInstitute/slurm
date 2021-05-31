@@ -554,7 +554,8 @@ extern int bcast_file(struct bcast_parameters *params)
 
 	if ((rc = _file_state(params)) != SLURM_SUCCESS)
 		return rc;
-	if ((rc = _get_job_info(params)) != SLURM_SUCCESS)
+	if (!(params->flags & BCAST_FLAG_SHARED_OBJECT) &&
+	    ((rc = _get_job_info(params)) != SLURM_SUCCESS))
 		return rc;
 	if ((rc = _bcast_file(params)) != SLURM_SUCCESS)
 		return rc;

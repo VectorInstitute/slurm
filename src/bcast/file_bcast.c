@@ -531,6 +531,7 @@ extern int bcast_shared_objects(struct bcast_parameters *params)
 		goto fini;
 	}
 
+	params->flags |= BCAST_FLAG_SHARED_OBJECT;
 	/* xdirname() may modify the contents of path, so work off a copy. */
 	dst_fname_copy = xstrdup(params->dst_fname);
 	args.bcast_cache_dir = xdirname(dst_fname_copy);
@@ -539,6 +540,7 @@ extern int bcast_shared_objects(struct bcast_parameters *params)
 
 	list_for_each(lib_paths, _foreach_shared_object, &args);
 	rc = args.return_code;
+	params->flags &= ~BCAST_FLAG_SHARED_OBJECT;
 
 fini:
 	xfree(dst_fname_copy);

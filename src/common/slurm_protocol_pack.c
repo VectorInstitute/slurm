@@ -4301,6 +4301,7 @@ _pack_slurm_ctl_conf_msg(slurm_ctl_conf_info_msg_t * build_ptr, buf_t *buffer,
 		pack16(build_ptr->batch_start_timeout, buffer);
 		pack_time(build_ptr->boot_time, buffer);
 		packstr(build_ptr->bb_type, buffer);
+		packstr(build_ptr->bcast_exclude, buffer);
 
 		pack_key_pair_list(build_ptr->cgroup_conf, protocol_version,
 		                   buffer);
@@ -5188,6 +5189,8 @@ _unpack_slurm_ctl_conf_msg(slurm_ctl_conf_info_msg_t **build_buffer_ptr,
 		safe_unpack16(&build_ptr->batch_start_timeout, buffer);
 		safe_unpack_time(&build_ptr->boot_time, buffer);
 		safe_unpackstr_xmalloc(&build_ptr->bb_type,
+		                       &uint32_tmp, buffer);
+		safe_unpackstr_xmalloc(&build_ptr->bcast_exclude,
 		                       &uint32_tmp, buffer);
 
 		if (unpack_key_pair_list(&build_ptr->cgroup_conf,

@@ -462,6 +462,16 @@ This configuration parameter is also applied to launch tasks and avoid aborting
 \fBsrun\fR commands due to long running \fBProlog\fR scripts.
 
 .TP
+\fBBcastExclude\fR
+Comma-separated list of absolute directory paths to be excluded when
+autodetecting and broadcasting executable shared object dependencies through
+\fBsbcast\fR or \fBsrun \-\-bcast\fR. If the keyword "\fINone\fR" is configured,
+no directory paths will be excluded. The default value is
+"\fI/lib,/usr/lib,/lib64,/usr/lib64\fR". This option can be overridden by
+\fBsbcast \-\-exclude\fR and \fBsrun --bcast-exclude\fR. See also
+\fBBcastParameters\fR.
+
+.TP
 \fBBurstBufferType\fR
 The plugin used to manage burst buffers. Acceptable values at present are:
 .RS
@@ -2728,7 +2738,7 @@ If set, attempt to autodetect and broadcast the executable's shared object
 dependencies to allocated compute nodes. The files are placed in the same
 directory as the executable. This can be overridden with either \fBsbcast\fR or
 \fBsrun\fR \fB\-\-send\-libs\fR option.
-By default this is disabled.
+By default this is disabled. See also \fBBcastExclude\fR.
 .RE
 
 .TP

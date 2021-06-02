@@ -49,6 +49,12 @@ this is unneeded as the job ID will read from the environment.
 Preserves modification times, access times, and modes from the
 original file.
 .TP
+\fB\-\-send\-libs\fR[=\fIyes|no\fR]
+If set to \fIyes\fR (or no argument), autodetect and broadcast the executable's
+shared object dependencies to allocated compute nodes. The files are placed in
+the same directory as the executable. This overrides the default behavior
+configured in slurm.conf \fBSbcastParameters send_libs\fR.
+.TP
 \fB\-s\fR \fIsize\fR, \fB\-\-size\fR=\fIsize\fR
 Specify the block size used for file broadcast.
 The size can have a suffix of \fIk\fR or \fIm\fR for kilobytes
@@ -99,6 +105,9 @@ these settings.)
 .TP
 \fBSBCAST_FORCE\fR
 \fB\-f, \-\-force\fR
+.TP
+\fBSBCAST_SEND_LIBS\fR
+\fB\-\-send\-libs\fR[=\fIyes|no\fR]
 .TP
 \fBSBCAST_PRESERVE\fR
 \fB\-p, \-\-preserve\fR

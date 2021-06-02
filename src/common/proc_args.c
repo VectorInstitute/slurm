@@ -1579,6 +1579,21 @@ uint16_t parse_compress_type(const char *arg)
 	return COMPRESS_OFF;
 }
 
+/*
+ * IN: option argument value to interpret.
+ * RET: 1 if enabled, 0 if disabled, -1 if error
+ */
+int parse_send_libs(const char *arg)
+{
+	if (!arg || !xstrcasecmp(arg, "yes") || !xstrcasecmp(arg, "y"))
+		return 1;
+
+	if (!xstrcasecmp(arg, "no") || !xstrcasecmp(arg, "n"))
+		return 0;
+
+	return -1;
+}
+
 extern int validate_acctg_freq(char *acctg_freq)
 {
 	int i;

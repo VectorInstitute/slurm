@@ -182,6 +182,14 @@ allocated compute nodes and execute that file. This option applies to step
 allocations.
 
 .TP
+\fB\-\-bcast\-exclude\fR=<\fINONE\fR|\fIpath1\fR,\fI...\fR,\fIpathN\fR>
+Comma-separated list of absolute directory paths to be excluded when
+autodetecting and broadcasting executable shared object dependencies through
+\fB\-\-bcast\fR. If the keyword "\fINONE\fR" is configured, no directory paths
+will be excluded. The default value is that of slurm.conf \fBBcastExclude\fR and
+this option overrides it. See also \fB\-\-bcast\fR and \fB\-\-send\-libs\fR.
+
+.TP
 \fB\-b\fR, \fB\-\-begin\fR=<\fItime\fR>
 Defer initiation of this job until the specified time.
 It accepts times of the form \fIHH:MM:SS\fR to run a job at
@@ -2175,7 +2183,7 @@ If set to \fIyes\fR (or no argument), autodetect and broadcast the executable's
 shared object dependencies to allocated compute nodes. The files are placed in
 the same directory as the executable. This overrides the default behavior
 configured in slurm.conf \fBSbcastParameters send_libs\fR. This option only
-works in conjunction with \fB\-\-bcast\fR.
+works in conjunction with \fB\-\-bcast\fR. See also \fB\-\-bcast\-exclude\fR.
 
 .TP
 \fB\-\-signal\fR=[R:]<\fIsig_num\fR>[@<\fIsig_time\fR>]
@@ -2674,6 +2682,9 @@ Same as \fB\-\-acctg\-freq\fR
 .TP
 \fBSLURM_BCAST\fR
 Same as \fB\-\-bcast\fR
+.TP
+\fBSLURM_BCAST_EXCLUDE\fR
+Same as \fB\-\-bcast\-exclude\fR
 .TP
 \fBSLURM_BURST_BUFFER\fR
 Same as \fB\-\-bb\fR

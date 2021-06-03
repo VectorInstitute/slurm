@@ -731,6 +731,7 @@ static int _file_bcast(slurm_opt_t *opt_local, srun_job_t *job)
 	params = xmalloc(sizeof(struct bcast_parameters));
 	params->block_size = 8 * 1024 * 1024;
 	params->compress = srun_opt->compress;
+	params->exclude = xstrdup(srun_opt->bcast_exclude);
 	if (srun_opt->bcast_file)
 		params->dst_fname = xstrdup(srun_opt->bcast_file);
 	else
@@ -764,6 +765,7 @@ static int _file_bcast(slurm_opt_t *opt_local, srun_job_t *job)
 	}
 	slurm_destroy_selected_step(params->selected_step);
 	xfree(params->dst_fname);
+	xfree(params->exclude);
 	xfree(params->src_fname);
 	xfree(params);
 

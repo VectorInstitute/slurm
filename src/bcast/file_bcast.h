@@ -48,6 +48,7 @@
 struct bcast_parameters {
 	uint32_t block_size;
 	uint16_t compress;
+	char *exclude;
 	char *dst_fname;
 	int fanout;
 	uint16_t flags;

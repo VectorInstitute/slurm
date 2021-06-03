@@ -34,6 +34,13 @@ Some compression libraries may be unavailable on some systems.
 The default compression library (and enabling compression itself) may be
 set in the slurm.conf file using the SbcastParameter option.
 .TP
+\fB\-\-exclude\fR=<\fINONE\fR|\fIpath1\fR,\fI...\fR,\fIpathN\fR>
+Comma-separated list of absolute directory paths to be excluded when
+autodetecting and broadcasting executable shared object dependencies. If the
+keyword "\fINONE\fR" is configured, no directory paths will be excluded. The
+default value is that of slurm.conf \fBBcastExclude\fR and this option overrides
+it. See also \fB\-\-send\-libs\fR.
+.TP
 \fB\-f\fR, \fB\-\-force\fR
 If the destination file already exists, replace it.
 .TP
@@ -53,7 +60,8 @@ original file.
 If set to \fIyes\fR (or no argument), autodetect and broadcast the executable's
 shared object dependencies to allocated compute nodes. The files are placed in
 the same directory as the executable. This overrides the default behavior
-configured in slurm.conf \fBSbcastParameters send_libs\fR.
+configured in slurm.conf \fBSbcastParameters send_libs\fR. See also
+\fB\-\-exclude\fR.
 .TP
 \fB\-s\fR \fIsize\fR, \fB\-\-size\fR=\fIsize\fR
 Specify the block size used for file broadcast.
@@ -99,6 +107,9 @@ these settings.)
 .TP 20
 \fBSBCAST_COMPRESS\fR
 \fB\-C, \-\-compress\fR
+.TP
+\fBSBCAST_EXCLUDE\fR
+\fB\-\-exclude\fR=<\fINONE\fR|\fIpath1\fR,\fI...\fR,\fIpathN\fR>
 .TP
 \fBSBCAST_FANOUT\fR
 \fB\-F\fB \fInumber\fR, \fB\-\-fanout\fR=\fInumber\fR

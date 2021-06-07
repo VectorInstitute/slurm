@@ -3980,7 +3980,8 @@ static void _rpc_file_bcast(slurm_msg_t *msg)
 	 * filename, and we have to append the default filename to req->fname.
 	 * This same file name has to be recreated by exec_task().
 	 */
-	if (req->fname[strlen(req->fname) - 1] == '/') {
+	if (!(req->flags & FILE_BCAST_SO) &&
+	    req->fname[strlen(req->fname) - 1] == '/') {
 		xstrfmtcat(req->fname, "slurm_bcast_%"PRIu32".%"PRIu32"_%s",
 			   cred_arg->job_id, cred_arg->step_id,
 			   conf->node_name);

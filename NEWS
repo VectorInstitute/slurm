@@ -124,6 +124,8 @@ documents those changes that are of interest to users and administrators.
  -- Fix testing array job after regaining locks in backfill.
  -- Don't display node's comment with "scontrol show nodes" unless set.
  -- Add "Extra" field to node to store extra information other than a comment.
+ -- Add support for automatically detecting and broadcasting executable shared
+    object dependencies for sbcast and srun --bcast.
 
 * Changes in Slurm 20.11.9
 ==========================

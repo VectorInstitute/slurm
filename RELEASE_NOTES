@@ -66,6 +66,8 @@ HIGHLIGHTS
  -- service files - change dependency to network-online rather than just
     network to ensure DNS and other services are available.
  -- Add "Extra" field to node to store extra information other than a comment.
+ -- Add support for automatically detecting and broadcasting executable shared
+    object dependencies for sbcast and srun --bcast.
 
 CONFIGURATION FILE CHANGES (see man appropriate man page for details)
 =====================================================================
@@ -79,6 +81,7 @@ CONFIGURATION FILE CHANGES (see man appropriate man page for details)
  -- Removed DefaultStorage{Host,Loc,Pass,Port,Type,User} options.
  -- Removed CacheGroups, CheckpointType, JobCheckpointDir, MemLimitEnforce,
     SchedulerPort, SchedulerRootFilter options.
+ -- Added BcastParameters=send_libs and BcastExclude options.
 
 COMMAND CHANGES (see man pages for details)
 ===========================================
@@ -99,6 +102,7 @@ COMMAND CHANGES (see man pages for details)
     input environment variables for salloc and sbatch, respectively. They do
     the same thing as --threads-per-core.
  -- Don't display node's comment with "scontrol show nodes" unless set.
+ -- Added sbcast/srun --send-libs, sbcast --exclude and srun --bcast-exclude.
 
 API CHANGES
 ===========

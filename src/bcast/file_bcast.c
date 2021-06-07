@@ -322,6 +322,8 @@ static int _bcast_file(struct bcast_parameters *params)
 	bcast_msg.block_no	= 1;
 	if (params->flags & BCAST_FLAG_FORCE)
 		bcast_msg.flags |= FILE_BCAST_FORCE;
+	if (params->flags & BCAST_FLAG_SHARED_OBJECT)
+		bcast_msg.flags |= FILE_BCAST_SO;
 	bcast_msg.modes		= f_stat.st_mode;
 	bcast_msg.uid		= f_stat.st_uid;
 	bcast_msg.user_name	= uid_to_string(f_stat.st_uid);

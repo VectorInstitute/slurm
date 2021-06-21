@@ -59,6 +59,7 @@
 #include "src/common/hostlist.h"
 #include "src/common/log.h"
 #include "src/common/macros.h"
+#include "src/common/proc_args.h"
 #include "src/common/read_config.h"
 #include "src/common/slurm_protocol_api.h"
 #include "src/common/slurm_protocol_defs.h"
@@ -86,6 +87,8 @@ static int   _file_bcast(struct bcast_parameters *params,
 			 file_bcast_msg_t *bcast_msg,
 			 job_sbcast_cred_msg_t *sbcast_cred);
 static int   _file_state(struct bcast_parameters *params);
+static List _fill_in_excluded_paths(struct bcast_parameters *params);
+static int _find_subpath(void *x, void *key);
 static int _foreach_shared_object(void *x, void *y);
 static int   _get_job_info(struct bcast_parameters *params);
 static int _get_lib_paths(char *filename, List lib_paths);
@@ -484,6 +487,22 @@ fini:
 }
 
 /*
+ * ListFindF for excl_paths.
+ *
+ * IN:	x, list data with excluded path
+ * IN:	key, shared object path to check
+ *
+ * RET: return of subpath()
+ */
+static int _find_subpath(void *x, void *key)
+{
+	char *exclude_path = x;
+	char *so_path = key;
+
+	return subpath(so_path, exclude_path);
+}
+
+/*
  * ListForF to attempt to bcast a shared object.
  *
  * IN:	x, list data
@@ -496,6 +515,13 @@ static int _foreach_shared_object(void *x, void *y)
 	xfree(args->params->src_fname);
 	args->params->src_fname = xstrdup((char *) x);
 	char *dst_basename = NULL, *src_fname_copy = NULL;
+
+	if (list_find_first(args->excluded_paths, _find_subpath,
+			    args->params->src_fname)) {
+		verbose("Skipping broadcast of excluded '%s'",
+			args->params->src_fname);
+		return 0;
+	}
 
 	src_fname_copy = xstrdup(args->params->src_fname);
 	dst_basename = xbasename(src_fname_copy);
@@ -519,6 +545,38 @@ static int _foreach_shared_object(void *x, void *y)
 }
 
 /*
+ * Validates params->exclude and fills in a List off it.
+ *
+ * IN: bcast_parameters
+ *
+ * RET: List of excluded paths.
+ * NOTE: Caller should free the returned list.
+ */
+static List _fill_in_excluded_paths(struct bcast_parameters *params)
+{
+	char *tmp_str = NULL, *tok = NULL, *saveptr = NULL;
+	List excl_paths = NULL;
+
+	excl_paths = list_create(xfree_ptr);
+	if (!xstrcasecmp(params->exclude, "none"))
+		return excl_paths;
+
+	tmp_str = xstrdup(params->exclude);
+	tok = strtok_r(tmp_str, ",", &saveptr);
+	while (tok) {
+		if (tok[0] != '/')
+			error("Ignorning non-absolute excluded path: '%s'",
+			      tok);
+		else
+			list_append(excl_paths, xstrdup(tok));
+		tok = strtok_r(NULL, ",", &saveptr);
+	}
+
+	xfree(tmp_str);
+	return excl_paths;
+}
+
+/*
  * IN/OUT: bcast_parameters pointer
  *
  * RET: SLURM_[ERROR|SUCCESS]
@@ -528,7 +586,7 @@ extern int bcast_shared_objects(struct bcast_parameters *params)
 	foreach_shared_object_t args;
 	int rc;
 	char *dst_fname_copy = NULL;
-	List lib_paths = NULL;
+	List lib_paths = NULL, excl_paths = NULL;
 
 	xassert(params);
 
@@ -545,10 +603,12 @@ extern int bcast_shared_objects(struct bcast_parameters *params)
 	}
 
 	params->flags |= BCAST_FLAG_SHARED_OBJECT;
+	excl_paths = _fill_in_excluded_paths(params);
 	/* xdirname() may modify the contents of path, so work off a copy. */
 	dst_fname_copy = xstrdup(params->dst_fname);
 	args.bcast_cache_dir = xdirname(dst_fname_copy);
 	args.params = params;
+	args.excluded_paths = excl_paths;
 	args.return_code = rc;
 
 	list_for_each(lib_paths, _foreach_shared_object, &args);
@@ -557,6 +617,7 @@ extern int bcast_shared_objects(struct bcast_parameters *params)
 
 fini:
 	xfree(dst_fname_copy);
+	FREE_NULL_LIST(excl_paths);
 	FREE_NULL_LIST(lib_paths);
 	return rc;
 }

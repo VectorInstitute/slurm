@@ -236,6 +236,7 @@ typedef struct {
 
 	uint16_t accel_bind_type;	/* --accel-bind			*/
 	char *alloc_nodelist;		/* grabbed from the environment	*/
+	char *bcast_cache_dir;		/* cache dir bcast'd libraries	*/
 	char *bcast_exclude;		/* --bcast-exclude */
 	char *bcast_file;		/* --bcast, copy executable to compute nodes */
 	bool bcast_flag;		/* --bcast, copy executable to compute nodes */

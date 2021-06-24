@@ -688,6 +688,30 @@ static void _wait_all_het_job_comps_started(slurm_opt_t *opt_local)
 	slurm_mutex_unlock(&start_mutex);
 }
 
+/*
+ * Prepend/set the bcast_cache_dir to the step env LD_LIBRARY_PATH.
+ *
+ * IN/OUT:	launch_params
+ * IN:		cache_dir char pointer
+ */
+static void _adjust_library_path(slurm_step_launch_params_t launch_params,
+				 char *cache_dir)
+{
+	char *lpath_old = NULL, *lpath_new = NULL;
+
+	xassert(launch_params.env);
+	xassert(cache_dir);
+
+	lpath_old = getenvp(launch_params.env, "LD_LIBRARY_PATH");
+
+	if (lpath_old)
+		xstrfmtcat(lpath_new, "%s:%s", cache_dir, lpath_old);
+	else
+		lpath_new = xstrdup(cache_dir);
+
+	env_array_overwrite(&launch_params.env, "LD_LIBRARY_PATH", lpath_new);
+}
+
 extern int launch_p_step_launch(srun_job_t *job, slurm_step_io_fds_t *cio_fds,
 				uint32_t *global_rc,
 				slurm_step_launch_callbacks_t *step_callbacks,
@@ -794,6 +818,9 @@ extern int launch_p_step_launch(srun_job_t *job, slurm_step_io_fds_t *cio_fds,
 	launch_params.ntasks_per_socket  = job->ntasks_per_socket;
 	launch_params.no_alloc           = srun_opt->no_alloc;
 	launch_params.env = _build_user_env(job, opt_local);
+
+	if (srun_opt->bcast_cache_dir)
+		_adjust_library_path(launch_params, srun_opt->bcast_cache_dir);
 
 	memcpy(&launch_params.local_fds, cio_fds, sizeof(slurm_step_io_fds_t));
 

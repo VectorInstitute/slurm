@@ -758,9 +758,12 @@ static void _file_bcast(slurm_opt_t *opt_local, srun_job_t *job)
 
 	xfree(srun_opt->argv[0]);
 	srun_opt->argv[0] = xstrdup(params->dst_fname);
-	if ((params->flags & BCAST_FLAG_SEND_LIBS) &&
-	    (bcast_shared_objects(params) != SLURM_SUCCESS))
-		fatal("Failed to broadcast shared object dependencies. Step launch aborted.");
+	if (params->flags & BCAST_FLAG_SEND_LIBS) {
+		srun_opt->bcast_cache_dir =
+			xdirname(xstrdup(params->dst_fname));
+		if (bcast_shared_objects(params) != SLURM_SUCCESS)
+			fatal("Failed to broadcast shared object dependencies. Step launch aborted.");
+	}
 
 	slurm_destroy_selected_step(params->selected_step);
 	xfree(params->dst_fname);

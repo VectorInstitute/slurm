@@ -135,7 +135,7 @@ extern bool preempt_p_preemptable(
 	    // if it's WITHIN and the preemptor has higher priority
 	    // then return true
 	    return (slurm_conf.preempt_mode & PREEMPT_MODE_WITHIN && 
-		    preemptor -> priority > preemptee-> priority) ? true: false
+		    preemptor -> priority > preemptee-> priority) ? true: false;
 	}
 
 	return true;

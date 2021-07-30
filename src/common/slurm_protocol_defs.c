@@ -2767,8 +2767,8 @@ extern uint16_t preempt_mode_num(const char *preempt_mode)
 	}
 	xfree(tmp_str);
 
-	if ((preempt_modes > 1) || ((preempt_modes & PREEMPT_MODE_GANG) &&
-				    (preempt_modes & PREEMPT_MODE_WITHIN))) {
+	if ((preempt_modes > 1) || ((mode_num & PREEMPT_MODE_GANG) &&
+				    (mode_num & PREEMPT_MODE_WITHIN))) {
 		mode_num = NO_VAL16;
 	}
 
